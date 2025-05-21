@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Antrian Digital</title>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --danger: #f72585;
+      --success: #4cc9f0;
+      --warning: #f8961e;
+      --dark: #2b2d42;
+      --light: #f8f9fa;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background-color: #f5f7fa;
+      color: var(--dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+    h1 {
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, #4361ee, #4cc9f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 15px;
+      margin-bottom: 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    .btn-danger {
+      background-color: var(--danger);
+    }
+    .btn-danger:hover {
+      background-color: #e5177a;
+      box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+    }
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      gap: 15px;
+    }
+    .queue-list {
+      margin-top: 2rem;
+    }
+    .queue-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px;
+      margin-bottom: 15px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    .queue-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    .queue-item.called {
+      border-left: 6px solid var(--success);
+    }
+    .queue-info {
+      flex: 1;
+    }
+    .queue-number {
+      font-weight: bold;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+    .queue-customer {
+      color: #555;
+      margin-top: 5px;
+    }
+    .queue-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .status-waiting {
+      background-color: rgba(248, 150, 30, 0.15);
+      color: var(--warning);
+    }
+    .status-called {
+      background-color: rgba(76, 201, 240, 0.15);
+      color: var(--success);
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      background-color: var(--dark);
+      color: white;
+    }
+    footer a {
+      color: var(--primary-light);
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    footer a:hover {
+      color: var(--success);
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      .container {
+        padding: 1.5rem;
+      }
+      .card {
+        padding: 2rem;
+      }
+      .action-buttons {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+        margin-right: 0;
+        justify-content: center;
+      }
+      .queue-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .queue-status {
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>PANEL ADMIN ANTRIAN</h1>
+      
+      <div class="action-buttons">
+        <button onclick="panggilAntrianBerikutnya()">
+          <i class="fas fa-bullhorn"></i> Panggil Antrian Berikutnya
+        </button>
+        <button class="btn-danger" onclick="resetAntrian()">
+          <i class="fas fa-trash-alt"></i> Reset Antrian
+        </button>
+      </div>
+      
+      <div class="queue-list">
+        <h2><i class="fas fa-list"></i> Daftar Antrian</h2>
+        <div id="queue-items"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Sistem Antrian Digital &copy; 2023 | Dibuat oleh <a href="https://www.instagram.com/ilhamnrllh_/" target="_blank">Ilhamnrllh</a></p>
+  </footer>
+
+  <script>
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-nAY8lyVRoTsC2-PMycEh5I-ySxSDZPM",
+      authDomain: "antrian-digital-48ac3.firebaseapp.com",
+      projectId: "antrian-digital-48ac3",
+      storageBucket: "antrian-digital-48ac3.appspot.com",
+      messagingSenderId: "716509213241",
+      appId: "1:716509213241:web:40bc817e163c03869e13e8",
+      databaseURL: "https://antrian-digital-48ac3-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const antrianRef = db.ref('antrian');
+
+    // Load Daftar Antrian
+    function loadAntrian() {
+      antrianRef.orderByChild('timestamp').on('value', (snapshot) => {
+        const queueItemsContainer = document.getElementById('queue-items');
+        queueItemsContainer.innerHTML = '';
+        
+        if (!snapshot.exists()) {
+          queueItemsContainer.innerHTML = '<p style="text-align:center;color:#666;">Tidak ada antrian saat ini</p>';
+          return;
+        }
+        
+        snapshot.forEach((child) => {
+          const antrian = child.val();
+          const antrianId = child.key;
+          
+          const queueItem = document.createElement('div');
+          queueItem.className = `queue-item ${antrian.status === 'called' ? 'called' : ''}`;
+          
+          queueItem.innerHTML = `
+            <div class="queue-info">
+              <div class="queue-number">${antrianId}</div>
+              <div class="queue-customer">${antrian.name} • ${antrian.phone}</div>
+            </div>
+            <div class="queue-status ${antrian.status === 'called' ? 'status-called' : 'status-waiting'}">
+              ${antrian.status === 'called' ? 'DIPANGGIL' : 'MENUNGGU'}
+            </div>
+          `;
+          
+          queueItemsContainer.appendChild(queueItem);
+        });
+      });
+    }
+
+    // Panggil Antrian Berikutnya
+    function panggilAntrianBerikutnya() {
+      antrianRef.orderByChild('status').equalTo('waiting').limitToFirst(1).once('value', (snapshot) => {
+        if (!snapshot.exists()) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Tidak Ada Antrian',
+            text: 'Tidak ada antrian yang menunggu saat ini',
+            confirmButtonColor: '#4361ee'
+          });
+          return;
+        }
+        
+        snapshot.forEach((child) => {
+          child.ref.update({ status: 'called' })
+            .then(() => {
+              Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Memanggil',
+                html: `Antrian <strong>${child.key}</strong> telah dipanggil`,
+                confirmButtonColor: '#4cc9f0'
+              });
+            });
+        });
+      });
+    }
+
+    // Reset Antrian
+    function resetAntrian() {
+      Swal.fire({
+        title: 'Reset Semua Antrian?',
+        text: "Anda tidak bisa mengembalikan data yang sudah direset!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f72585',
+        cancelButtonColor: '#4361ee',
+        confirmButtonText: 'Ya, Reset!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          antrianRef.remove()
+            .then(() => {
+              Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Direset',
+                text: 'Semua antrian telah dihapus',
+                confirmButtonColor: '#4cc9f0'
+              });
+            })
+            .catch((error) => {
+              Swal.fire({
+                icon: 'error',
+                title: 'Gagal Mereset',
+                text: 'Terjadi kesalahan: ' + error.message,
+                confirmButtonColor: '#4361ee'
+              });
+            });
+        }
+      });
+    }
+
+    // Inisialisasi
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAntrian();
+    });
+  </script>
+</body>
+</html>
